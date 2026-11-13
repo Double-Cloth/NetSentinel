@@ -1,0 +1,16 @@
+.git
+**/node_modules
+**/dist
+**/coverage.out
+**/bin
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite-*
+.env
+.env.*
+data
+uploads
+output
+.playwright-cli
+.impeccable

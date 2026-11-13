@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "rule_id": "R-001",
+  "name": "SSH 同账户多次认证失败",
+  "description": "同一来源在同一主机同一账户 300 秒内至少认证失败 5 次",
+  "source": "ssh",
+  "type": "count",
+  "severity": "medium",
+  "group_by": ["source_host", "src_ip", "user.name"],
+  "window_seconds": 300,
+  "where": {"all": [{"field": "kind", "op": "eq", "value": "ssh.auth_failed"}]},
+  "threshold": 5
+}

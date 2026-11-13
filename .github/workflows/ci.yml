@@ -1,0 +1,178 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  repository:
+    name: 仓库与文档检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      go-modules: ${{ steps.modules.outputs.go-modules }}
+      frontend: ${{ steps.modules.outputs.frontend }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 检查提交中的空白错误
+        run: git show --format= --check HEAD
+      - name: 检测已接入模块
+        id: modules
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          modules = [name for name in ("engine", "backend") if Path(name, "go.mod").is_file()]
+          frontend = Path("frontend/package.json").is_file()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print(f"go-modules={json.dumps(modules)}", file=output)
+              print(f"frontend={str(frontend).lower()}", file=output)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              print("## 模块检测", file=summary)
+              print(f"\nGo 模块 {'、'.join(modules) or '尚未接入'}", file=summary)
+              print(f"\nWeb 模块 {'已接入' if frontend else '尚未接入'}", file=summary)
+          PY
+      - name: 检查 Markdown
+        uses: DavidAnson/markdownlint-cli2-action@696eb3f2509270d7b882d2aa68347bc676e7af34 # v25.0.0
+
+  go:
+    name: Go / ${{ matrix.module }}
+    needs: repository
+    if: needs.repository.outputs.go-modules != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.repository.outputs.go-modules) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 配置 Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache-dependency-path: ${{ matrix.module }}/go.*
+      - name: 检查 Go 格式
+        run: |
+          files=$(gofmt -l .)
+          if [ -n "$files" ]; then
+            printf '%s\n' "$files"
+            exit 1
+          fi
+      - name: 静态检查
+        run: go vet ./...
+      - name: 单元测试、竞态检测与覆盖率
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+      - name: 构建
+        run: go build ./...
+      - name: 检查依赖文件一致性
+        run: git diff --exit-code -- go.mod go.sum
+      - name: 保存覆盖率报告
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.module }}
+          path: ${{ matrix.module }}/coverage.out
+          if-no-files-found: ignore
+          retention-days: 14
+
+  frontend:
+    name: Web 检查与构建
+    needs: repository
+    if: needs.repository.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 配置 Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: 安装锁定依赖
+        run: npm ci
+      - name: 类型检查
+        run: npm run typecheck
+      - name: 前端测试
+        run: npm test
+        env:
+          CI: 'true'
+      - name: 构建
+        run: npm run build
+      - name: 检查依赖文件一致性
+        run: git diff --exit-code -- package.json package-lock.json
+
+  compose:
+    name: Compose 构建与烟测
+    needs: [go, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 构建并启动
+        run: docker compose up --build -d --wait
+      - name: 验证就绪与路由
+        run: |
+          curl --fail --silent http://127.0.0.1:8088/api/v1/health/ready | python3 -c 'import json,sys; result=json.load(sys.stdin); assert result["data"]["status"] == "ok"; assert all(value == "ready" for value in result["data"]["checks"].values())'
+          curl --fail --silent http://127.0.0.1:8088/rules | python3 -c 'import sys; assert "<div id=\"root\"></div>" in sys.stdin.read()'
+      - name: 输出运行记录
+        if: always()
+        run: docker compose ps -a && docker compose logs --no-color
+      - name: 停止服务
+        if: always()
+        run: docker compose down
+
+  ci:
+    name: CI 结果
+    needs: [repository, go, frontend, compose]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REPOSITORY_RESULT: ${{ needs.repository.result }}
+      GO_RESULT: ${{ needs.go.result }}
+      FRONTEND_RESULT: ${{ needs.frontend.result }}
+      COMPOSE_RESULT: ${{ needs.compose.result }}
+    steps:
+      - name: 汇总检查结果
+        run: |
+          test "$REPOSITORY_RESULT" = success
+          for result in "$GO_RESULT" "$FRONTEND_RESULT" "$COMPOSE_RESULT"; do
+            case "$result" in
+              success|skipped) ;;
+              *) exit 1 ;;
+            esac
+          done

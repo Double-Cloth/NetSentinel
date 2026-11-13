@@ -1,0 +1,38 @@
+name: 需求变更
+description: 记录基线变更、影响分析、审批与生效版本。
+title: '[Change] '
+body:
+  - type: textarea
+    id: baseline
+    attributes:
+      label: 原需求与基线版本
+      description: 提供需求编号、原文条款和文档路径，正式基线使用 srs-v1.0.0 等版本。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 新需求与变更原因
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影响分析
+      description: 分析工期、规则语义、历史数据兼容、API、前端、存储、测试和部署影响，适用项逐一说明。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准与追溯更新
+      description: 列出需要更新的用例、模型、设计及测试编号。
+    validations:
+      required: true
+  - type: textarea
+    id: approval
+    attributes:
+      label: 审批与生效版本
+      description: 提案时登记待确认事项，审批后补充审批人、结论、日期、目标增量和相关 PR。
+    validations:
+      required: true

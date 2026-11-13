@@ -1,0 +1,38 @@
+name: 功能与用户故事
+description: 提交增量范围内的功能、用户价值和验收标准。
+title: '[Feature] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: 用户故事与来源
+      description: 说明角色、要完成的操作、价值及真实需求来源。
+      placeholder: 作为 admin / analyst / auditor，我希望……，以便……。
+    validations:
+      required: true
+  - type: input
+    id: traceability
+    attributes:
+      label: 需求编号与目标增量
+      placeholder: UC-xx / US-xx，v0.1 / v0.2 / v0.3
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 实现范围与依赖
+      description: 写明相关模块、前置 Issue 和设计文档。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 列出可验证的正常、异常与权限场景。
+      placeholder: |
+        - [ ] 正常场景……
+        - [ ] 异常场景……
+        - [ ] 角色权限……
+    validations:
+      required: true

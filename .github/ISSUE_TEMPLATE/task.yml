@@ -1,0 +1,40 @@
+name: 开发与文档任务
+description: 跟踪开发、文档、测试、评审及迭代交付。
+title: '[Task] '
+body:
+  - type: input
+    id: traceability
+    attributes:
+      label: 关联工作包与需求
+      placeholder: WP-05 / UC-xx / D05 / 前置 Issue
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: 目标与交付物
+      description: 说明要完成的工作、涉及模块及可独立审阅的产物。
+    validations:
+      required: true
+  - type: input
+    id: planning
+    attributes:
+      label: 负责人、估时与目标增量
+      description: 按计划以 4—12 人时拆分任务，负责人及 Milestone 可同步在侧栏设置。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完成条件与验证方式
+      placeholder: |
+        - [ ] 交付物完成并关联需求或设计
+        - [ ] 记录验证命令与实际结果
+        - [ ] PR 经人工 Review、CI 通过并合并
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 执行与过程证据
+      description: 执行后补充 PR、测试报告、评审或回顾记录，AI 辅助内容记录实际采纳、修改或拒绝情况。
