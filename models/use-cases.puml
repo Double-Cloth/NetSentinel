@@ -1,0 +1,86 @@
+@startuml
+' 第 11 周候选用例图，权限以 SRS 第 2 节为准。
+left to right direction
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+skinparam packageStyle rectangle
+actor "已登录用户\n（抽象角色）" as User <<abstract>>
+actor "管理员\nadmin" as Admin
+actor "分析员\nanalyst" as Analyst
+actor "审计员\nauditor" as Auditor
+actor "授权日志源" as LogSource
+actor "飞书自定义机器人\n（次参与者）" as Feishu
+User <|-- Admin
+User <|-- Analyst
+User <|-- Auditor
+rectangle "NetSentinel 自动采集与告警平台" {
+  usecase "UC-01 登录与会话" as UC01
+  usecase "UC-02 用户与角色" as UC02
+  usecase "UC-03 日志源配置与预览" as UC03
+  usecase "UC-04 自动拉取与批次入库" as UC04
+  usecase "UC-05 日志源与数据集查询" as UC05
+  usecase "UC-06 事件与异常查询" as UC06
+  usecase "UC-07 创建规则" as UC07
+  usecase "UC-08 规则校验" as UC08
+  usecase "UC-09 沙箱测试" as UC09
+  usecase "UC-10 发布规则" as UC10
+  usecase "UC-11 规则启停" as UC11
+  usecase "UC-12 版本查询" as UC12
+  usecase "UC-13 自动分析与手动复核" as UC13
+  usecase "UC-14 采集与任务进度" as UC14
+  usecase "UC-15 重复分析" as UC15
+  usecase "UC-16 告警查询" as UC16
+  usecase "UC-17 告警解释" as UC17
+  usecase "UC-18 认领与转派" as UC18
+  usecase "UC-19 人工处置" as UC19
+  usecase "UC-20 审计追溯" as UC20
+  usecase "UC-21 自动告警与飞书通知" as UC21
+  usecase "UC-22 告警工作台与采集指标" as UC22
+}
+User --> UC01
+User --> UC05
+User --> UC06
+User --> UC12
+User --> UC14
+User --> UC16
+User --> UC17
+User --> UC20
+User --> UC22
+Admin --> UC02
+Admin --> UC03
+Admin --> UC04
+Admin --> UC07
+Admin --> UC08
+Admin --> UC09
+Admin --> UC10
+Admin --> UC11
+Admin --> UC13
+Admin --> UC15
+Admin --> UC18
+Admin --> UC19
+Admin --> UC21
+Analyst --> UC08
+Analyst --> UC09
+Analyst --> UC13
+Analyst --> UC15
+Analyst --> UC18
+Analyst --> UC19
+User --> UC21 : 仅查看投递状态
+LogSource --> UC03 : 提供连接测试与样本
+LogSource --> UC04 : 提供授权增量日志
+Feishu <-- UC21 : 接收通知并返回结果
+note bottom of UC13
+批次 ready 后由系统自动排队；
+人工复核仅 admin/analyst。
+采集、分析与告警无需用户逐次触发。
+end note
+note bottom of UC18
+analyst 只能处置本人认领告警；
+转派仅 admin，必须记录理由。
+end note
+note bottom of UC21
+配置与手动重投仅 admin。
+通知失败不回滚已提交告警。
+end note
+note "UC-23 / NFR-01：正确性与性能验收场景\nUC-24 / NFR-02：安全、可靠性与部署验收场景\n二者是跨用例质量约束，不作为业务功能椭圆。\n登录用例允许未认证用户提交凭据；其他业务均要求有效会话。" as Quality
+@enduml

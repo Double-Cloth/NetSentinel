@@ -1,6 +1,6 @@
 # NetSentinel
 
-NetSentinel 面向实验室、小型服务器和教学环境，使用自主开发的 Go 独立规则引擎分析授权导入的 Nginx、Linux SSH 日志，通过 React Web 平台管理规则、执行离线分析并处置告警。
+NetSentinel 面向实验室、小型服务器和教学环境，使用自主开发的 Go 独立规则引擎分析授权 Nginx、Linux SSH 日志，通过 React Web 平台管理规则、执行离线分析并处置告警。
 
 ## 项目章程摘要
 
@@ -15,6 +15,10 @@ NetSentinel 面向实验室、小型服务器和教学环境，使用自主开�
 | 选型理由 | 检测正确性和日志格式存在早期风险，先用最小纵向业务验证，再增加规则能力与产品流程，每轮保留测试、评审与回顾证据 |
 | 成功标准 | 三类规则结果正确，重复分析幂等，三角色权限有效，完整业务可复现，课程资料与发布记录对应 |
 | 当前阶段 | 工程基础已建立，Count 可独立运行，Web 与健康检查可联调，业务增量继续推进 |
+
+## 主流程修订计划
+
+根据用户转述的第 10 周教师建议及[变更 #58](https://github.com/Double-Cloth/NetSentinel/issues/58)，后续主流程为“配置授权日志源 → 定时自动拉取 → 不可变批次 → 自动分析 → 站内告警 → 人工处置/飞书通知”。前端重点是告警证据、采集新鲜度与失败恢复，手工上传仅用于补录与测试。采集网络访问只在 backend，引擎继续离线运行固定快照。该能力与前端增强均为计划，当前基础框架尚未实现自动采集或自动告警；协议、跨批次去重与预算仍待评审。
 
 ## 当前实现与目录
 
@@ -97,6 +101,10 @@ go build ./...
 ```
 
 在 `frontend/` 执行 `npm ci`、`npm run typecheck`、`npm test`、`npm run build`。根目录执行 `npx --yes markdownlint-cli2@0.24.0`。基础测试覆盖 Count 阈值和闭合窗口、分组、重跑确定性、并发运行、配额、取消、接收器失败、规则校验、迁移约束和健康响应，执行记录见[基础框架交付记录](Documentation/Implementation/基础框架交付记录.md)。
+
+## 第 11 周需求交付
+
+[SRS v1.0 发布候选](Documentation/Requirements/SRS_v1.0.md)、[追溯矩阵 v0](Documentation/Requirements/追溯矩阵_v0.md)、[用例图](Documentation/Requirements/用例图.md)、[变更管理](Documentation/Requirements/变更管理.md)及[评审与发布记录](Documentation/Requirements/评审与发布记录.md)对应 Issue #6。按用户 2026-11-25 最新指令，第 11 周任务以其他成员批准 PR、CI 通过并合入 main 为完成条件，不再要求教师签字。来源冲突与技术待办保留供成员评审及后续实现跟踪；`srs-v1.0.0` Release 作为合并后的归档，不作为额外完成门槛。候选需求不代表产品能力已实现。
 
 ## 文档导航
 
