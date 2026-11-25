@@ -98,6 +98,10 @@ go build ./...
 
 在 `frontend/` 执行 `npm ci`、`npm run typecheck`、`npm test`、`npm run build`。根目录执行 `npx --yes markdownlint-cli2@0.24.0`。基础测试覆盖 Count 阈值和闭合窗口、分组、重跑确定性、并发运行、配额、取消、接收器失败、规则校验、迁移约束和健康响应，执行记录见[基础框架交付记录](Documentation/Implementation/基础框架交付记录.md)。
 
+## 第 11 周需求交付
+
+[SRS v1.0 发布候选](Documentation/Requirements/SRS_v1.0.md)、[追溯矩阵 v0](Documentation/Requirements/追溯矩阵_v0.md)、[用例图](Documentation/Requirements/用例图.md)、[变更管理](Documentation/Requirements/变更管理.md)及[评审与发布记录](Documentation/Requirements/评审与发布记录.md)对应 Issue #6。正式评审、来源冲突确认和教师签字尚待完成，`srs-v1.0.0` 正式基线须经人工关卡后发布；候选需求不代表产品能力已实现。
+
 ## 文档导航
 
 | 文档 | 阅读内容 |
