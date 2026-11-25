@@ -104,7 +104,7 @@ go build ./...
 
 ## 第 11 周需求交付
 
-[SRS v1.0 发布候选](Documentation/Requirements/SRS_v1.0.md)、[追溯矩阵 v0](Documentation/Requirements/追溯矩阵_v0.md)、[用例图](Documentation/Requirements/用例图.md)、[变更管理](Documentation/Requirements/变更管理.md)及[评审与发布记录](Documentation/Requirements/评审与发布记录.md)对应 Issue #6。正式评审、来源冲突确认和教师签字尚待完成，`srs-v1.0.0` 正式基线须经人工关卡后发布；候选需求不代表产品能力已实现。
+[SRS v1.0 发布候选](Documentation/Requirements/SRS_v1.0.md)、[追溯矩阵 v0](Documentation/Requirements/追溯矩阵_v0.md)、[用例图](Documentation/Requirements/用例图.md)、[变更管理](Documentation/Requirements/变更管理.md)及[评审与发布记录](Documentation/Requirements/评审与发布记录.md)对应 Issue #6。按用户 2026-11-25 最新指令，第 11 周任务以其他成员批准 PR、CI 通过并合入 main 为完成条件，不再要求教师签字。来源冲突与技术待办保留供成员评审及后续实现跟踪；`srs-v1.0.0` Release 作为合并后的归档，不作为额外完成门槛。候选需求不代表产品能力已实现。
 
 ## 文档导航
 
