@@ -1,0 +1,7 @@
+192.0.2.70 - - [26/Nov/2026:16:00:00 +0800] "GET /index.html HTTP/1.1" 200 4520 "-" "Mozilla/5.0 synthetic"
+192.0.2.70 - - [26/Nov/2026:16:00:01 +0800] "GET /search?q=fixture HTTP/1.1" 200 812 "https://example.invalid/" "Mozilla/5.0 synthetic"
+198.51.100.80 - - [26/Nov/2026:16:01:00 +0800] "GET /.git/config HTTP/1.1" 404 162 "-" "SyntheticScanner/1.0"
+198.51.100.80 - - [26/Nov/2026:16:01:01 +0800] "GET /.env HTTP/1.1" 404 162 "-" "SyntheticScanner/1.0"
+203.0.113.90 - student [26/Nov/2026:16:02:00 +0800] "POST /api/v1/experiment/submit HTTP/1.1" 500 523 "https://example.invalid/lab" "Mozilla/5.0 synthetic"
+2001:db8::25 - - [26/Nov/2026:16:03:00 +0800] "GET /ipv6 HTTP/2.0" 204 0 "-" "curl/synthetic"
+192.0.2.71 - - [26/Nov/2026:16:04:00 +0800] "-" 400 0 "-" "MalformedSynthetic/1.0"

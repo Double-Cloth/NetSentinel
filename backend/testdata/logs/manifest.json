@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "file": "ssh_r001_hit.log",
+      "format": "ssh-rfc3339",
+      "line_count": 5,
+      "sha256": "6c66bcaf832e3bdd89f5e6f8d40312f1c9a95b8079def02674aded706cb9b608",
+      "r001_expected_findings": 1
+    },
+    {
+      "file": "ssh_r001_no_hit.log",
+      "format": "ssh-rfc3339",
+      "line_count": 5,
+      "sha256": "4ca32898230c4e4c3f689c7b4c5150c2fc7c66645e26e4f3cb6ee45a7af17d9c",
+      "r001_expected_findings": 0
+    },
+    {
+      "file": "ssh_mixed_users.log",
+      "format": "ssh-rfc3339",
+      "line_count": 5,
+      "sha256": "f4254cf0e0a7ed2fc7ef26f1457a516d98be7007038ee44430b842c393f0f615",
+      "r001_expected_findings": 0
+    },
+    {
+      "file": "ssh_invalid_user.log",
+      "format": "ssh-rfc3339",
+      "line_count": 6,
+      "sha256": "2a1baafbdb94f2305f4cb4ff6fc7e5fbedfd2a3fc26d3c9d6fc2b17cc3b042dc",
+      "r001_expected_findings": 1
+    },
+    {
+      "file": "ssh_dirty.log",
+      "format": "ssh-rfc3339",
+      "line_count": 6,
+      "sha256": "0f31355184c02317d5bb96800a25cba45c8c371514e5049d9dd908b3055eeeb0",
+      "r001_expected_findings": 0
+    },
+    {
+      "file": "ssh_rfc3164.log",
+      "format": "ssh-rfc3164",
+      "line_count": 5,
+      "sha256": "4ebeb8872934039fb03a2aa701a4d3e678dabd497e479057edce23381b2a9cba",
+      "year": 2026,
+      "timezone": "+08:00",
+      "r001_expected_findings": 1
+    },
+    {
+      "file": "nginx_combined.log",
+      "format": "nginx-combined",
+      "line_count": 7,
+      "sha256": "b6f21970d97e5d4f7de4896f8a2343e3393f408c02e1e89e702319825132666a",
+      "r001_expected_findings": 0
+    }
+  ]
+}

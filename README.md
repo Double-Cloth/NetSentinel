@@ -35,6 +35,7 @@ backend/                Go HTTP 服务，进程装配与业务包分离
   cmd/server/           迁移、管理员初始化、服务与健康检查
   internal/             配置、API、SQLite 仓储与身份会话
   migrations/           内嵌编号 SQL 与迁移摘要
+  testdata/logs/        确定性 SSH/Nginx 原始日志测试夹具
 frontend/src/           React + TypeScript，app/features/shared 分层
 deploy/                 多阶段镜像与 Nginx 同源代理
 models/                 UML 图源、SVG 与合成 API 契约夹具

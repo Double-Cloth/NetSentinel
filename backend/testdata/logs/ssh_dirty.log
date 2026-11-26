@@ -1,0 +1,6 @@
+2026-11-26T14:00:00+08:00 server-node-04 sshd[21401]: Accepted publickey for deploy from 203.0.113.50 port 49501 ssh2: RSA SHA256:synthetic
+2026-11-26T14:00:10+08:00 server-node-04 sshd[21402]: Invalid user scanner from 203.0.113.50 port 49502
+2026-11-26T14:00:20+08:00 server-node-04 sshd[21403]: Connection closed by invalid user scanner 203.0.113.50 port 49503 [preauth]
+2026-11-26T14:00:30+08:00 server-node-04 sshd[21404]: pam_unix(sshd:session): session opened for user deploy
+2026-11-26T14:00:40+08:00 server-node-04 sshd[21405]: Failed password for root from not-an-ip port 49505 ssh2
+not-a-timestamp server-node-04 sshd[21406]: Failed password for root from 203.0.113.50 port 49506 ssh2
