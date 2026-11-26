@@ -124,6 +124,6 @@ go build ./...
 
 需求与变更通过 Issue 管理，开发分支经 PR、人工 Review 和 CI 合并至 `main`。需求基线使用 `srs-v1.0.0`，产品增量使用 `v0.1.0`、`v0.2.0`、`v0.3.0`，避免版本命名混淆。每名成员至少主讲一次并完成至少 10 个有效合并 PR，保留两次正式抽样代码评审和两轮以上迭代回顾。
 
-远端仓库为 [Double-Cloth/NetSentinel](https://github.com/Double-Cloth/NetSentinel)，默认分支为 `main`。2026-11-13 实际查询该分支的生效规则返回空列表，保护规则需由维护者落实。团队协作仍按贡献指南通过开发分支和 PR、人工 Review、`CI 结果` 检查集成，Projects 与 Releases 按详细计划书推进。
+远端仓库为 [Double-Cloth/NetSentinel](https://github.com/Double-Cloth/NetSentinel)，默认分支为 `main`。2026-11-26 核验确认经典分支保护已生效，要求通过 PR、至少一项批准评审、处理完全部讨论并通过 `CI 结果` 检查，禁止强制推送和删除 `main`。协作流程见 [贡献指南](CONTRIBUTING.md)，任务进度见 [Project #4](https://github.com/users/Double-Cloth/projects/4)。
 
 基础 CI 在 push、PR 和手动触发时执行文档检查，并按 `engine/`、`backend/`、`frontend/` 模块接入状态启用 Go/Web 检查。仓库提供缺陷、功能、任务、需求变更 Issue 表单及 PR 模板，协作约定与本地检查命令见 [贡献指南](CONTRIBUTING.md)。

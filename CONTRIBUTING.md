@@ -54,6 +54,8 @@ git diff --exit-code -- package.json package-lock.json
 
 Issue 表单和 PR 模板放在 `.github/`。Dependabot 每周一北京时间 09:00 检查 GitHub Actions、两个 Go module 与 npm 依赖更新，React 相关依赖成组提交更新 PR。
 
-GitHub 仓库以 `main` 为默认集成分支。2026-11-13 查询分支生效规则返回空列表，维护者需落实保护配置。团队约定通过 PR、至少一名其他成员批准、处理完全部讨论并通过 `CI 结果` 检查后集成。Milestone 按三个增量创建，Projects 使用 Backlog、Ready、In Progress、In Review、Done。
+GitHub 仓库以 `main` 为默认集成分支。2026-11-26 通过分支保护 API 核验，经典分支保护要求通过 PR 集成、至少一项批准评审、处理完全部讨论、分支与 `main` 保持最新且 `CI 结果` 通过。新提交使已有批准失效，禁止强制推送和删除 `main`，管理员同样受保护规则约束。团队要求由至少一名其他成员完成人工评审。
+
+[Project #4](https://github.com/users/Double-Cloth/projects/4) 的自定义「工作流状态」依次为 Backlog、Ready、In Progress、In Review、Done。系统自带 `Status` 的 Todo、In Progress、Done 用于辅助显示。三个产品增量对应的 Milestone 已创建，目标与验收依据见 [详细项目计划书](Documentation/Planning/01_详细项目计划书.md#63-版本与变更约定)。
 
 测试夹具使用授权脱敏日志或确定性合成数据。提交前检查差异和凭据，运行数据及构建输出按 `.gitignore` 管理。
