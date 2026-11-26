@@ -211,3 +211,52 @@ func TestDeterministicConcurrentRuns(t *testing.T) {
 		t.Fatal("编译结果被外部修改")
 	}
 }
+
+func TestHighCardinalityWindowReclaimsCapacity(t *testing.T) {
+	const groups = 1024
+	const windowUS = 300_000_000
+	r := compiled(t)
+	events := eventsAt(make([]int64, groups+1)...)
+	for i := range events {
+		events[i].User = &event.User{Name: fmt.Sprintf("fixture-%d", i)}
+	}
+	options := engine.DefaultOptions()
+	options.MaxGroups = groups
+	options.MaxBufferedRefs = groups
+
+	events[groups].TimeUS = windowUS
+	_, err := engine.Run(context.Background(), &iterator{events: events}, []rule.CompiledRule{r}, options, &sink{})
+	var runErr *engine.Error
+	if !errors.As(err, &runErr) || runErr.Code != "ENGINE_RESOURCE_LIMIT" {
+		t.Fatalf("左边界的分组和引用应仍占用配额，实际 %v", err)
+	}
+
+	events[groups].TimeUS = windowUS + 1
+	output := &sink{}
+	stats, err := engine.Run(context.Background(), &iterator{events: events}, []rule.CompiledRule{r}, options, output)
+	if err != nil || stats.InputEvents != groups+1 || len(output.results) != 0 {
+		t.Fatalf("过期的分组和引用应回收，统计 %+v，错误 %v", stats, err)
+	}
+}
+
+func TestR001SplitBatchBoundary(t *testing.T) {
+	r := compiled(t)
+	events := eventsAt(0, 60_000_000, 120_000_000, 180_000_000, 300_000_000)
+	tail := events[4]
+	tail.DatasetID = "dataset-2"
+	tail.Index = 1
+	for _, input := range [][]event.Event{events[:4], {tail}} {
+		output := &sink{}
+		if _, err := engine.Run(context.Background(), &iterator{events: input}, []rule.CompiledRule{r}, engine.DefaultOptions(), output); err != nil || len(output.results) != 0 {
+			t.Fatalf("独立批次应无命中，实际 %d，错误 %v", len(output.results), err)
+		}
+	}
+
+	output := &sink{}
+	if _, err := engine.Run(context.Background(), &iterator{events: events}, []rule.CompiledRule{r}, engine.DefaultOptions(), output); err != nil {
+		t.Fatal(err)
+	}
+	if len(output.results) != 1 || len(output.results[0].Evidence) != 5 {
+		t.Fatalf("完整快照应产生一条五证据告警，实际 %+v", output.results)
+	}
+}
