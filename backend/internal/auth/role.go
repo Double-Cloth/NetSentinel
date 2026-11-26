@@ -1,4 +1,4 @@
-// Package auth 定义三角色契约，认证与会话在后续增量接入。
+// Package auth 负责身份、登录校验及会话生命周期。
 package auth
 
 type Role string

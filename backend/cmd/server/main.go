@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"flag"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Double-Cloth/NetSentinel/backend/internal/api"
+	"github.com/Double-Cloth/NetSentinel/backend/internal/auth"
 	"github.com/Double-Cloth/NetSentinel/backend/internal/config"
 	"github.com/Double-Cloth/NetSentinel/backend/internal/repository"
 )
@@ -30,9 +32,10 @@ func main() {
 func run(logger *slog.Logger) error {
 	migrate := flag.Bool("migrate", false, "应用数据库迁移后退出")
 	healthcheck := flag.Bool("healthcheck", false, "检查本地服务就绪状态后退出")
+	initAdmin := flag.String("init-admin", "", "首次初始化指定管理员账号，从标准输入读取一行密码")
 	flag.Parse()
-	if *migrate && *healthcheck {
-		return fmt.Errorf("migrate 与 healthcheck 不能同时使用")
+	if (*migrate && *healthcheck) || (*initAdmin != "" && (*migrate || *healthcheck)) {
+		return fmt.Errorf("migrate、healthcheck 与 init-admin 须单独使用")
 	}
 	cfg, err := config.Load()
 	if err != nil {
@@ -60,10 +63,29 @@ func run(logger *slog.Logger) error {
 	if err := store.Ready(startup); err != nil {
 		return fmt.Errorf("请先执行 server -migrate: %w", err)
 	}
+	if *initAdmin != "" {
+		input := bufio.NewScanner(os.Stdin)
+		input.Buffer(make([]byte, 256), 256)
+		if !input.Scan() {
+			return fmt.Errorf("请从标准输入提供一行有效密码")
+		}
+		if err := auth.BootstrapAdmin(startup, store.DB, *initAdmin, input.Text()); err != nil {
+			return err
+		}
+		logger.Info("首个管理员已初始化")
+		return nil
+	}
 	if err := repository.WritableDirectory(cfg.DataDir); err != nil {
 		return err
 	}
-	handler := api.New(api.Dependencies{DatabaseReady: store.Ready, DirectoryReady: func() error { return repository.WritableDirectory(cfg.DataDir) }, Logger: logger})
+	identity, err := auth.NewService(store.DB)
+	if err != nil {
+		return err
+	}
+	handler := api.New(api.Dependencies{
+		DatabaseReady: store.Ready, DirectoryReady: func() error { return repository.WritableDirectory(cfg.DataDir) },
+		Logger: logger, Auth: identity, PublicOrigin: cfg.PublicOrigin,
+	})
 	server := &http.Server{Addr: cfg.Address, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	listener, err := net.Listen("tcp", cfg.Address)
 	if err != nil {

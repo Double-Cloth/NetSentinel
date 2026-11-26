@@ -1,4 +1,4 @@
-// Package api 提供统一响应、请求标识和基础健康检查。
+// Package api 提供统一响应、身份入口和基础健康检查。
 package api
 
 import (
@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Double-Cloth/NetSentinel/backend/internal/auth"
 	"github.com/Double-Cloth/NetSentinel/engine/rule"
 )
 
@@ -17,6 +18,8 @@ type Dependencies struct {
 	DatabaseReady  func(context.Context) error
 	DirectoryReady func() error
 	Logger         *slog.Logger
+	Auth           *auth.Service
+	PublicOrigin   string
 }
 
 type Health struct {
@@ -55,6 +58,8 @@ func New(deps Dependencies) http.Handler {
 		status := http.StatusOK
 		result := response{RequestID: requestID}
 		switch r.URL.Path {
+		case "/api/v1/auth/login", "/api/v1/auth/me", "/api/v1/auth/logout":
+			status = handleAuth(w, r, deps, &result)
 		case "/api/v1/health/live", "/api/v1/health/ready":
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
 				status = http.StatusMethodNotAllowed
@@ -86,7 +91,7 @@ func New(deps Dependencies) http.Handler {
 			result.Error = &APIError{Code: "NOT_FOUND", Message: "请求的接口不存在"}
 		}
 		w.WriteHeader(status)
-		if r.Method != http.MethodHead {
+		if r.Method != http.MethodHead && status != http.StatusNoContent {
 			if err := json.NewEncoder(w).Encode(result); err != nil {
 				deps.Logger.Error("响应写入失败", "request_id", requestID)
 			}

@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	Address      string
 	DataDir      string
 	DatabasePath string
+	PublicOrigin string
 }
 
 func Load() (Config, error) {
@@ -30,5 +32,13 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	return Config{Address: address, DataDir: absolute, DatabasePath: filepath.Join(absolute, "netsentinel.db")}, nil
+	origin := os.Getenv("NETSENTINEL_PUBLIC_ORIGIN")
+	if origin != "" {
+		value, err := url.Parse(origin)
+		if err != nil || value.Hostname() == "" || (value.Scheme != "http" && value.Scheme != "https") ||
+			value.User != nil || origin != value.Scheme+"://"+value.Host {
+			return Config{}, fmt.Errorf("NETSENTINEL_PUBLIC_ORIGIN 须为含协议和主机的 Origin")
+		}
+	}
+	return Config{Address: address, DataDir: absolute, DatabasePath: filepath.Join(absolute, "netsentinel.db"), PublicOrigin: origin}, nil
 }
