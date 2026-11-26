@@ -18,6 +18,7 @@ package "自动采集" {
   LogSource "1" -- "0..*" CollectionAttempt
   CollectionAttempt --> "0..1" Dataset : 就绪批次
   CollectionAttempt "1" -- "0..*" ParseIssue
+  Dataset --> "1..*" SourceFile : 固定原文
   note right of Dataset : 就绪批次发布后不可修改
   Dataset "1" -- "1..*" NormalizedEvent
   NormalizedEvent --> SourceFile : 原始引用
@@ -35,6 +36,7 @@ package "规则与执行" {
   AnalysisTask --> Dataset : 固定输入
   AnalysisTask --> "1..*" RuleVersion : 固定规则
   AnalysisTask ..> RuleEngine
+  AnalysisTask ..> Finding : 暂存命中
   RuleEngine ..> NormalizedEvent
   RuleEngine ..> RuleVersion
   RuleEngine ..> WindowState : 每次运行独立
@@ -48,11 +50,17 @@ package "告警与通知" {
   class NotificationConfig
   class NotificationDelivery
   Alert --> Finding : 冻结证据
+  AnalysisTask "1..*" -- "0..*" Alert : 发布或复用
   Alert --> "0..1" User : 负责人
   Alert "1" -- "0..*" DispositionRecord
   DispositionRecord --> User
   DispositionRecord ..> AuditRecord
   NotificationDelivery --> Alert
   NotificationDelivery --> NotificationConfig
+  NotificationConfig --> User : 配置者
 }
+CollectionAttempt ..> AuditRecord : 采集审计
+AnalysisTask ..> AuditRecord : 执行审计
+Rule ..> AuditRecord : 变更审计
+NotificationDelivery ..> AuditRecord : 重投审计
 @enduml

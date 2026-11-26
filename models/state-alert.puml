@@ -4,8 +4,10 @@ skinparam defaultFontName Microsoft YaHei
 open --> acknowledged : 认领并记录负责人
 acknowledged --> closed : 有权处置且填写理由
 acknowledged --> false_positive : 有权处置且填写理由
+acknowledged --> acknowledged : admin 转派并填写理由
 note right of acknowledged
-认领及处置均校验 row_version
-备注和重跑不改变当前状态
+认领、转派及处置均校验 row_version
+终态只允许管理员或原负责人追加备注
+重跑保留状态、负责人及处置历史
 end note
 @enduml

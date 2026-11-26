@@ -1,12 +1,27 @@
 @startuml
 skinparam defaultFontName Microsoft YaHei
 start
+if (自动调度？) then (是)
+  :验证服务身份、来源授权及启用状态;
+else (手动复核)
+  :验证 admin 或 analyst 会话权限、Origin 及 CSRF;
+endif
+if (授权有效且批次 ready、规则已发布并兼容？) then (是)
+else (否)
+  :拒绝受理并记录阶段原因;
+  stop
+endif
 :读取 ready 批次和兼容的已发布规则;
-:固定快照，按幂等键入队;
-if (已有任务？) then (是)
+:检查自动唯一键或手动请求幂等键;
+if (已有相同任务？) then (是)
   :返回原任务;
   stop
 endif
+if (手动幂等键已用于其他请求？) then (是)
+  :返回 409;
+  stop
+endif
+:原子固定快照并写入 queued 任务;
 :Worker 原子领取并标记 running;
 :按固定顺序送入独立引擎，暂存 Finding;
 if (执行成功？) then (是)
@@ -15,7 +30,8 @@ else (否)
   :记录失败阶段，丢弃暂存;
   stop
 endif
-:写入告警与证据，保留既有人工作业字段;
+:按指纹发布或复用告警，写入任务关联与审计;
+:启用飞书时，仅对新的 high 或 critical 告警写 Outbox（v0.3）;
 if (提交成功？) then (是)
   :告警与 succeeded 同时可见;
 else (否)

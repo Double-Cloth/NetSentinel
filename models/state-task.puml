@@ -9,6 +9,7 @@ committing --> failed : 回滚或恢复
 failed --> [*]
 succeeded --> [*]
 note right of failed
+重启保留 queued，遗留 running 或 committing 标记失败
 重试创建新执行记录，保留原终态
 end note
 @enduml
