@@ -1,0 +1,5 @@
+2026-11-26T10:00:00+08:00 server-node-01 sshd[21001]: Failed password for root from 192.0.2.10 port 49101 ssh2
+2026-11-26T10:01:00+08:00 server-node-01 sshd[21002]: Failed password for root from 192.0.2.10 port 49102 ssh2
+2026-11-26T10:02:00+08:00 server-node-01 sshd[21003]: Failed password for root from 192.0.2.10 port 49103 ssh2
+2026-11-26T10:03:00+08:00 server-node-01 sshd[21004]: Failed password for root from 192.0.2.10 port 49104 ssh2
+2026-11-26T10:04:00+08:00 server-node-01 sshd[21005]: Failed password for root from 192.0.2.10 port 49105 ssh2

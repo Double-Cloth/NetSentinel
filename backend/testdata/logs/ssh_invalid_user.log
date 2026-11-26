@@ -1,0 +1,6 @@
+2026-11-26T13:00:00+08:00 server-node-03 sshd[21300]: Invalid user guest from 198.51.100.40 port 49400
+2026-11-26T13:00:01+08:00 server-node-03 sshd[21301]: Failed password for invalid user guest from 198.51.100.40 port 49401 ssh2
+2026-11-26T13:00:31+08:00 server-node-03 sshd[21302]: Failed password for invalid user guest from 198.51.100.40 port 49402 ssh2
+2026-11-26T13:01:01+08:00 server-node-03 sshd[21303]: Failed password for invalid user guest from 198.51.100.40 port 49403 ssh2
+2026-11-26T13:01:31+08:00 server-node-03 sshd[21304]: Failed password for invalid user guest from 198.51.100.40 port 49404 ssh2
+2026-11-26T13:02:01+08:00 server-node-03 sshd[21305]: Failed password for invalid user guest from 198.51.100.40 port 49405 ssh2
