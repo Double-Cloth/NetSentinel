@@ -11,6 +11,9 @@
 .env.*
 data
 uploads
+backend/data
+backend/uploads
+backend/server.exe
 output
 .playwright-cli
 .impeccable
