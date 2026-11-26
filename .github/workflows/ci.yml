@@ -148,6 +148,44 @@ jobs:
         run: |
           curl --fail --silent http://127.0.0.1:8088/api/v1/health/ready | python3 -c 'import json,sys; result=json.load(sys.stdin); assert result["data"]["status"] == "ok"; assert all(value == "ready" for value in result["data"]["checks"].values())'
           curl --fail --silent http://127.0.0.1:8088/rules | python3 -c 'import sys; assert "<div id=\"root\"></div>" in sys.stdin.read()'
+      - name: 验证 Compose 登录和注销
+        run: |
+          python3 - <<'PY'
+          import http.cookiejar
+          import json
+          import secrets
+          import subprocess
+          import urllib.error
+          import urllib.request
+
+          origin = "http://127.0.0.1:8088"
+          username = "smoke_admin"
+          password = secrets.token_urlsafe(24)
+          subprocess.run(
+              ["docker", "compose", "exec", "-T", "api", "/app/server", "-init-admin", username],
+              input=password + "\n", text=True, check=True,
+          )
+          browser = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+          credentials = json.dumps({"username": username, "password": password}).encode()
+          headers = {"Origin": origin, "Content-Type": "application/json"}
+          login = urllib.request.Request(origin + "/api/v1/auth/login", data=credentials, headers=headers)
+          with browser.open(login, timeout=5) as response:
+              session = json.load(response)["data"]
+              assert session["user"]["username"] == username
+          with browser.open(origin + "/api/v1/auth/me", timeout=5) as response:
+              assert json.load(response)["data"] == session
+          logout = urllib.request.Request(origin + "/api/v1/auth/logout", method="POST", headers={
+              "Origin": origin, "X-CSRF-Token": session["csrf_token"],
+          })
+          with browser.open(logout, timeout=5) as response:
+              assert response.status == 204
+          try:
+              browser.open(origin + "/api/v1/auth/me", timeout=5).close()
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          else:
+              raise AssertionError("logout left a valid session")
+          PY
       - name: 输出运行记录
         if: always()
         run: docker compose ps -a && docker compose logs --no-color

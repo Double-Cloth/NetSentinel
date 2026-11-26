@@ -1,6 +1,6 @@
 # NetSentinel
 
-NetSentinel 面向实验室、小型服务器和教学环境，使用自主开发的 Go 独立规则引擎分析授权 Nginx、Linux SSH 日志，通过 React Web 平台管理规则、执行离线分析并处置告警。
+NetSentinel 面向实验室、小型服务器和教学环境。项目以授权 Nginx、Linux SSH 日志的定时拉取、独立 Go 规则引擎分析和站内告警为主流程，通过 React Web 平台查看来源状态与证据。
 
 ## 项目章程摘要
 
@@ -14,11 +14,11 @@ NetSentinel 面向实验室、小型服务器和教学环境，使用自主开�
 | 过程模型 | 需求基线约束下的增量迭代，按 v0.1、v0.2、v0.3 形成三个可运行交付 |
 | 选型理由 | 检测正确性和日志格式存在早期风险，先用最小纵向业务验证，再增加规则能力与产品流程，每轮保留测试、评审与回顾证据 |
 | 成功标准 | 三类规则结果正确，重复分析幂等，三角色权限有效，完整业务可复现，课程资料与发布记录对应 |
-| 当前阶段 | 工程基础已建立，Count 可独立运行，Web 与健康检查可联调，业务增量继续推进 |
+| 当前阶段 | v0.1.0 开发中，基础登录、健康检查和独立 Count 引擎可用 |
 
 ## 主流程修订计划
 
-根据用户转述的第 10 周教师建议及[变更 #58](https://github.com/Double-Cloth/NetSentinel/issues/58)，后续主流程为“配置授权日志源 → 定时自动拉取 → 不可变批次 → 自动分析 → 站内告警 → 人工处置/飞书通知”。前端重点是告警证据、采集新鲜度与失败恢复，手工上传仅用于补录与测试。采集网络访问只在 backend，引擎继续离线运行固定快照。该能力与前端增强均为计划，当前基础框架尚未实现自动采集或自动告警；协议、跨批次去重与预算仍待评审。
+根据第 10 周教师建议及[变更 #58](https://github.com/Double-Cloth/NetSentinel/issues/58)，v0.1.0 的出口是“配置授权日志源 → 定时自动拉取 → 不可变批次 → R-001 自动分析 → 站内告警与证据”。手工上传用于补录与测试，人工处置和飞书通知在后续版本。采集网络访问由 backend 承担，引擎读取固定快照。工作包状态及剩余验收见 [v0.1.0 交付索引](Documentation/Implementation/v0.1.0_交付索引.md)。
 
 ## 当前实现与目录
 
@@ -32,11 +32,13 @@ engine/                 独立 Go module，仅依赖标准库
   runtime/              迭代器、接收器、配额、取消与运行统计
   testdata/rules/        R-001 确定性规则样例
 backend/                Go HTTP 服务，进程装配与业务包分离
-  cmd/server/           迁移、服务启动、健康检查命令与优雅关闭
-  internal/             配置、API、SQLite 仓储与角色契约
+  cmd/server/           迁移、管理员初始化、服务与健康检查
+  internal/             配置、API、SQLite 仓储与身份会话
   migrations/           内嵌编号 SQL 与迁移摘要
 frontend/src/           React + TypeScript，app/features/shared 分层
 deploy/                 多阶段镜像与 Nginx 同源代理
+models/                 UML 图源、SVG 与合成 API 契约夹具
+Documentation/          课程原文、需求基线、规划、ADR 与实施记录
 compose.yml             migrate、api、web 与持久化卷
 AGENTS.md               智能体行为与业务不变量
 DESIGN.md               中文界面、视觉 token 与交互规范
@@ -44,11 +46,11 @@ DESIGN.md               中文界面、视觉 token 与交互规范
 
 基础代码已实现规则严格解码、带类型谓词、Count、确定性证据与指纹、输入顺序与资源校验、SQLite WAL/外键/事务迁移、HTTP 健康检查、请求标识，以及真实服务状态工作台。根目录规则约束后续实现，模块可通过现有 CI 独立检查。
 
-Distinct、Sequence、日志导入、登录与会话、业务权限、规则管理、异步任务、告警处置和通知仍按增量计划开发。Web 对应页面展示模块状态，业务 API 随功能接入。当前数据库仅含迁移记录、用户、会话、审计基础表，管理员初始化随登录功能实现。本次交付为基础框架，v0.1 业务验收继续按计划推进。
+当前 Web 支持基础登录、刷新恢复会话、退出登录和真实健康检查。采集、解析、自动任务与告警页面仍按 v0.1.0 工作包开发。Distinct、Sequence、规则治理、完整 RBAC、人工处置及通知在后续增量交付。
 
 ## 本地启动
 
-需要 Go 1.27、Node.js 24。Go 模块独立维护，后端通过本地 `replace` 引用引擎。
+需要 Go 1.27.4 及 Node.js 24。Go 模块独立维护，后端通过本地 `replace` 引用引擎。
 
 在第一个终端初始化数据库并启动后端。
 
@@ -56,10 +58,15 @@ Distinct、Sequence、日志导入、登录与会话、业务权限、规则管�
 cd backend
 go mod download
 go run ./cmd/server -migrate
+read -rs -p '管理员密码: ' admin_password
+printf '%s\n' "$admin_password" | go run ./cmd/server -init-admin admin
+unset admin_password
 go run ./cmd/server
 ```
 
-后端默认监听 `127.0.0.1:8080`，数据目录为启动工作目录下的 `./data`。可通过 `NETSENTINEL_ADDR` 和 `NETSENTINEL_DATA_DIR` 覆盖。后续启动使用同一数据目录，已有迁移 SQL 的摘要变化将使启动失败，结构变更通过新增编号迁移完成。
+首次初始化在空用户表中创建管理员。用户名为 3—32 位小写字母、数字或下划线，密码至少 12 个字符且最多 72 个 UTF-8 字节。上面的密码输入使用 Bash，PowerShell 可用 `(Read-Host '管理员密码' -MaskInput) | go run ./cmd/server -init-admin admin`。已有管理员时直接启动服务。
+
+后端默认监听 `127.0.0.1:8080`，从 `backend/` 启动时数据保存在 `backend/data/`。可通过 `NETSENTINEL_ADDR` 和 `NETSENTINEL_DATA_DIR` 覆盖。后续启动使用同一数据目录，结构变更通过新增编号迁移完成。
 
 在第二个终端启动 Web。
 
@@ -69,12 +76,15 @@ npm ci
 npm run dev
 ```
 
-访问 [本地 Web](http://127.0.0.1:5173)，Vite 将 `/api` 代理到本地后端。工作台的“重新检查”读取实际 API、数据库迁移与目录可写状态。后端提供以下公开接口。
+访问 [本地 Web](http://127.0.0.1:5173)，用初始化的账号登录。Vite 将 `/api` 代理到本地后端。工作台的“重新检查”读取 API、数据库迁移与目录可写状态。
 
 | 接口 | 行为 |
 | --- | --- |
 | `GET /api/v1/health/live` | 进程存活，返回 200 |
 | `GET /api/v1/health/ready` | 数据库与迁移、运行目录检查，返回 200 或 503 |
+| `POST /api/v1/auth/login` | 校验同源请求与用户名密码，建立会话 |
+| `GET /api/v1/auth/me` | 使用会话 Cookie 查询当前用户、权限与 CSRF token |
+| `POST /api/v1/auth/logout` | 校验 Origin 和 CSRF 后撤销会话，返回 204 |
 
 响应使用 `data` / `error` 与 `request_id`，原始目录及内部错误只保留在服务端。
 
@@ -87,7 +97,15 @@ docker compose up --build -d --wait
 docker compose ps -a
 ```
 
-访问 [容器 Web](http://127.0.0.1:8088)。Web 端口默认绑定本机，可在根目录 `.env` 中设置 `.env.example` 的 `NETSENTINEL_WEB_PORT`。SQLite 使用 `netsentinel-data` 命名卷，停止应用使用 `docker compose down`。升级前停止应用并备份命名卷，迁移后进行就绪检查。
+首次部署时，在 Bash 中通过标准输入初始化首个管理员。
+
+```sh
+read -rs -p '管理员密码: ' admin_password
+printf '%s\n' "$admin_password" | docker compose exec -T api /app/server -init-admin admin
+unset admin_password
+```
+
+访问 [容器 Web](http://127.0.0.1:8088)。Web 端口默认绑定本机，可在根目录 `.env` 设置 `NETSENTINEL_WEB_PORT`。使用 HTTPS 反向代理或非本机浏览器 Origin 时，设置 `NETSENTINEL_PUBLIC_ORIGIN` 为浏览器地址的协议、主机和端口，例如 `https://netsentinel.example`。SQLite 使用 `netsentinel-data` 命名卷，停止应用使用 `docker compose down`。升级前停止应用并备份命名卷，迁移后进行就绪检查。
 
 ## 开发验证
 

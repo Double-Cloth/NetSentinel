@@ -9,7 +9,9 @@
 *.sqlite-wal
 *.sqlite-shm
 /data/
+/backend/data/
 /uploads/
+/backend/uploads/
 
 # 构建与测试输出
 node_modules/
@@ -20,6 +22,7 @@ coverage/
 playwright-report/
 test-results/
 /backend/bin/
+/backend/server.exe
 /engine/bin/
 /output/
 /.playwright-cli/

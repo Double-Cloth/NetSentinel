@@ -46,6 +46,15 @@ func TestStrictCompile(t *testing.T) {
 	}
 }
 
+func TestUnknownNestedFieldPath(t *testing.T) {
+	raw := bytes.Replace(fixture(t), []byte(`"field": "kind"`), []byte(`"field": "status"`), 1)
+	_, err := rule.Compile(rule.Snapshot{Spec: raw, SemanticsVersion: rule.SemanticsVersion})
+	var validation *predicate.Error
+	if !errors.As(err, &validation) || validation.Code != "RULE_FIELD_UNKNOWN" || validation.Path != "/where/all/0/field" {
+		t.Fatalf("未知字段应报告 /where/all/0/field，实际 %v", err)
+	}
+}
+
 func TestCanonicalAndHash(t *testing.T) {
 	raw := fixture(t)
 	compiled, err := rule.Compile(rule.Snapshot{Spec: raw, SemanticsVersion: rule.SemanticsVersion})

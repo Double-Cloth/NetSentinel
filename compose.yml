@@ -17,6 +17,7 @@ services:
     environment:
       NETSENTINEL_ADDR: 0.0.0.0:8080
       NETSENTINEL_DATA_DIR: /data
+      NETSENTINEL_PUBLIC_ORIGIN: ${NETSENTINEL_PUBLIC_ORIGIN:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
