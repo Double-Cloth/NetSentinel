@@ -13,7 +13,8 @@
         "code": "SOURCE_UNREACHABLE",
         "message": "连接日志源超时"
       },
-      "row_version": 1
+      "row_version": 1,
+      "interval_seconds": 60
     },
     "request_id": "fixture-source"
   },
@@ -40,7 +41,8 @@
       "window_start": "2026-11-26T00:00:00.000000Z",
       "window_end": "2026-11-26T00:05:00.000000Z",
       "actual_count": 5,
-      "threshold": 5
+      "threshold": 5,
+      "reason_code": "COUNT_THRESHOLD_ENTERED"
     },
     "request_id": "fixture-alert"
   },
@@ -54,7 +56,8 @@
           "event_time": "2026-11-26T00:00:00.000000Z",
           "raw_ref": {
             "file_id": "file-1",
-            "line_no": 1
+            "line_no": 1,
+            "raw_hash": "c4c3492d69824aaa4c8251401f043e158f212d95030b15bda8545c8cf17e16c2"
           }
         },
         {
@@ -64,7 +67,8 @@
           "event_time": "2026-11-26T00:01:00.000000Z",
           "raw_ref": {
             "file_id": "file-1",
-            "line_no": 2
+            "line_no": 2,
+            "raw_hash": "9cb4215a9d476c1bd841a49049f2113b51e10081f158e893e3497ffe165a0765"
           }
         },
         {
@@ -74,7 +78,8 @@
           "event_time": "2026-11-26T00:02:00.000000Z",
           "raw_ref": {
             "file_id": "file-1",
-            "line_no": 3
+            "line_no": 3,
+            "raw_hash": "6dd6b301750c10c18aa6ea19c4c00af79f1e90ed48696f434e704e901cfdc539"
           }
         },
         {
@@ -84,7 +89,8 @@
           "event_time": "2026-11-26T00:03:00.000000Z",
           "raw_ref": {
             "file_id": "file-1",
-            "line_no": 4
+            "line_no": 4,
+            "raw_hash": "a68f3df47a729048157890ba58f758884a822d6618627b23edfa3ffa2bad7d40"
           }
         },
         {
@@ -94,7 +100,8 @@
           "event_time": "2026-11-26T00:05:00.000000Z",
           "raw_ref": {
             "file_id": "file-1",
-            "line_no": 5
+            "line_no": 5,
+            "raw_hash": "44757857c6ed1255b61243397db97e8e665888d867bc2fb06f849d32a8916f72"
           }
         }
       ],
@@ -116,5 +123,63 @@
       ]
     },
     "request_id": "fixture-source-validation"
+  },
+  "retry_accepted": {
+    "data": {
+      "attempt_id": "attempt-2"
+    },
+    "request_id": "fixture-retry"
+  },
+  "task": {
+    "data": {
+      "id": "task-1",
+      "trigger": "automatic",
+      "status": "succeeded",
+      "phase": null,
+      "error": null,
+      "snapshot": {
+        "dataset_id": "batch-1",
+        "dataset_digest": "01a0fa7fac0f8d6bacedaac3a1349d7b5df7ea00edea5b06f8764b143654b12d",
+        "rules": [
+          {
+            "rule_id": "R-001",
+            "version": 1,
+            "spec_hash": "905455b35078d2a6fae1527513c1ab41894a70a8aacc018e3ae1115146b698c4"
+          }
+        ],
+        "engine_semantics_version": "1.0.0"
+      },
+      "processed_events": 5,
+      "total_events": 5,
+      "new_alerts": 1,
+      "reused_alerts": 0
+    },
+    "request_id": "fixture-task"
+  },
+  "stale_source": {
+    "error": {
+      "code": "VERSION_CONFLICT",
+      "message": "来源配置已更新，请刷新后重试"
+    },
+    "request_id": "fixture-conflict"
+  },
+  "collection_attempt": {
+    "data": {
+      "id": "attempt-2",
+      "source_id": "source-ssh-1",
+      "source_row_version": 1,
+      "kind": "retry",
+      "status": "queued",
+      "phase": null,
+      "created_at": "2026-11-26T00:06:00.000000Z",
+      "finished_at": null,
+      "consumed_bytes": 0,
+      "valid_lines": 0,
+      "ignored_lines": 0,
+      "error_lines": 0,
+      "batch_id": null,
+      "error": null
+    },
+    "request_id": "fixture-attempt"
   }
 }
