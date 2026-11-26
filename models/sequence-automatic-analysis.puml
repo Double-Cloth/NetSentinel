@@ -6,6 +6,7 @@ participant SQLite
 participant Worker
 participant 引擎
 participant 后端API
+participant Outbox投递器
 actor 查看者
 调度器 -> SQLite : 领取来源并获取断点
 调度器 -> 授权源 : 校验身份并读取完整行
@@ -14,12 +15,25 @@ alt 拉取与解析成功且有有效事件
   Worker -> SQLite : 领取任务与固定快照
   Worker -> 引擎 : Run（有序快照、已编译规则）
   引擎 --> Worker : Finding 或错误
-  alt 执行与提交成功
-    Worker -> SQLite : 原子发布告警、证据及 succeeded
-    查看者 -> 后端API : 查询告警证据
-    后端API -> SQLite : 鉴权后读取已发布结果
-  else 失败
-    Worker -> SQLite : 回滚并记录失败
+  alt 引擎执行成功
+    group 单个结果发布事务
+      Worker -> SQLite : 写告警、证据、任务关联、审计及 succeeded
+      opt 启用飞书且出现新的 high 或 critical 告警（v0.3）
+        Worker -> SQLite : 写入唯一 Outbox 记录
+      end
+      Worker -> SQLite : 提交结果
+    end
+    alt 提交成功
+      查看者 -> 后端API : 查询告警证据
+      后端API -> SQLite : 鉴权后读取已发布结果
+      opt v0.3 通知
+        Outbox投递器 -> SQLite : 读取已提交的通知并异步投递
+      end
+    else 提交失败
+      Worker -> SQLite : 回滚正式结果并记录失败
+    end
+  else 引擎失败
+    Worker -> SQLite : 记录失败，丢弃暂存
   end
 else 采集系统失败
   调度器 -> SQLite : 记录失败，保留已提交断点

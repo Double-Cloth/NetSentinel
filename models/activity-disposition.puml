@@ -3,7 +3,7 @@ skinparam defaultFontName Microsoft YaHei
 start
 :查看证据，必要时先认领告警;
 :提交动作、理由、row_version 和幂等键;
-if (有对象权限且状态允许？) then (是)
+if (会话、角色、Origin 及 CSRF 有效？) then (是)
 else (否)
   :拒绝操作;
   stop
@@ -13,16 +13,29 @@ else (否)
   :返回字段错误;
   stop
 endif
-:核对幂等记录并条件更新;
+:核对该操作者的幂等记录;
 if (为同一已提交操作？) then (是)
   :返回已有结果;
+  stop
+endif
+if (幂等键已用于不同请求？) then (是)
+  :返回 409;
   stop
 endif
 if (版本冲突？) then (是)
   :返回 409，提示刷新;
   stop
 endif
-:同一事务追加处置历史与审计;
+if (对象权限及本次状态转换允许？) then (是)
+else (否)
+  :拒绝操作，终态仅允许有权限者追加备注;
+  stop
+endif
+:在同一事务中按版本条件更新并追加处置历史、审计和幂等结果;
+if (条件更新未命中？) then (是)
+  :回滚并返回 409;
+  stop
+endif
 if (提交成功？) then (是)
   :返回新状态及时间线;
 else (否)
