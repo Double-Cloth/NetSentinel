@@ -1,0 +1,23 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+actor 浏览器
+node "单机 Docker Compose" {
+  node "Web / Nginx" as Web
+  node "API 容器" as API {
+    component "HTTP API" as HTTP
+    component "调度与 Worker（拟议）" as Worker
+    component "Go 独立引擎" as Engine
+    Worker --> Engine : 内存快照
+  }
+  node "一次性迁移容器" as Migrate
+  database "持久化卷\nSQLite 与原文" as Data
+  artifact "只读凭据挂载（拟议）" as Secrets
+}
+node "授权日志源（拟议）" as Source
+浏览器 --> Web : 同源
+Web --> HTTP : /api
+Migrate --> Data : 应用编号迁移
+API --> Data : 持久化
+Worker --> Secrets
+Worker --> Source : 只读 SFTP
+@enduml

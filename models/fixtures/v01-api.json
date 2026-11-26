@@ -1,0 +1,120 @@
+{
+  "log_source": {
+    "data": {
+      "id": "source-ssh-1",
+      "name": "合成 SSH 日志源",
+      "enabled": true,
+      "format": "ssh-rfc3339",
+      "health": "failed",
+      "last_success_at": "2026-11-26T00:05:10.000000Z",
+      "next_collection_at": "2026-11-26T00:07:00.000000Z",
+      "last_error": {
+        "phase": "pull",
+        "code": "SOURCE_UNREACHABLE",
+        "message": "连接日志源超时"
+      },
+      "row_version": 1
+    },
+    "request_id": "fixture-source"
+  },
+  "alert": {
+    "data": {
+      "id": "alert-1",
+      "dataset_id": "batch-1",
+      "rule_id": "R-001",
+      "rule_version": 1,
+      "severity": "medium",
+      "status": "open",
+      "assignee": null,
+      "row_version": 1,
+      "group_fields": [
+        "source_host",
+        "src_ip",
+        "user.name"
+      ],
+      "group_values": [
+        "ssh.example.test",
+        "192.0.2.10",
+        "fixtureuser"
+      ],
+      "window_start": "2026-11-26T00:00:00.000000Z",
+      "window_end": "2026-11-26T00:05:00.000000Z",
+      "actual_count": 5,
+      "threshold": 5
+    },
+    "request_id": "fixture-alert"
+  },
+  "alert_evidence": {
+    "data": {
+      "items": [
+        {
+          "ordinal": 1,
+          "event_id": "event-1",
+          "event_index": 1,
+          "event_time": "2026-11-26T00:00:00.000000Z",
+          "raw_ref": {
+            "file_id": "file-1",
+            "line_no": 1
+          }
+        },
+        {
+          "ordinal": 2,
+          "event_id": "event-2",
+          "event_index": 2,
+          "event_time": "2026-11-26T00:01:00.000000Z",
+          "raw_ref": {
+            "file_id": "file-1",
+            "line_no": 2
+          }
+        },
+        {
+          "ordinal": 3,
+          "event_id": "event-3",
+          "event_index": 3,
+          "event_time": "2026-11-26T00:02:00.000000Z",
+          "raw_ref": {
+            "file_id": "file-1",
+            "line_no": 3
+          }
+        },
+        {
+          "ordinal": 4,
+          "event_id": "event-4",
+          "event_index": 4,
+          "event_time": "2026-11-26T00:03:00.000000Z",
+          "raw_ref": {
+            "file_id": "file-1",
+            "line_no": 4
+          }
+        },
+        {
+          "ordinal": 5,
+          "event_id": "event-5",
+          "event_index": 5,
+          "event_time": "2026-11-26T00:05:00.000000Z",
+          "raw_ref": {
+            "file_id": "file-1",
+            "line_no": 5
+          }
+        }
+      ],
+      "page": 1,
+      "page_size": 20,
+      "total": 5
+    },
+    "request_id": "fixture-evidence"
+  },
+  "invalid_source": {
+    "error": {
+      "code": "SOURCE_CONFIG_INVALID",
+      "message": "SSH RFC3164 来源需要年份",
+      "details": [
+        {
+          "path": "/year",
+          "message": "请输入日志年份"
+        }
+      ]
+    },
+    "request_id": "fixture-source-validation"
+  }
+}

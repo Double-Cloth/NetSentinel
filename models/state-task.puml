@@ -1,0 +1,14 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+[*] --> queued
+queued --> running : 原子领取
+running --> committing : 引擎完成并暂存
+running --> failed : 超限、运行失败或恢复
+committing --> succeeded : 结果与终态原子发布
+committing --> failed : 回滚或恢复
+failed --> [*]
+succeeded --> [*]
+note right of failed
+重试创建新执行记录，保留原终态
+end note
+@enduml

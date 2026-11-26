@@ -1,0 +1,25 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+start
+:读取 ready 批次和兼容的已发布规则;
+:固定快照，按幂等键入队;
+if (已有任务？) then (是)
+  :返回原任务;
+  stop
+endif
+:Worker 原子领取并标记 running;
+:按固定顺序送入独立引擎，暂存 Finding;
+if (执行成功？) then (是)
+  :标记 committing 并开始发布事务;
+else (否)
+  :记录失败阶段，丢弃暂存;
+  stop
+endif
+:写入告警与证据，保留既有人工作业字段;
+if (提交成功？) then (是)
+  :告警与 succeeded 同时可见;
+else (否)
+  :回滚全部正式结果并记录失败;
+endif
+stop
+@enduml
