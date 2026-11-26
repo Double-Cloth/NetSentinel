@@ -1,0 +1,32 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+start
+:查看证据，必要时先认领告警;
+:提交动作、理由、row_version 和幂等键;
+if (有对象权限且状态允许？) then (是)
+else (否)
+  :拒绝操作;
+  stop
+endif
+if (必填理由完整？) then (是)
+else (否)
+  :返回字段错误;
+  stop
+endif
+:核对幂等记录并条件更新;
+if (为同一已提交操作？) then (是)
+  :返回已有结果;
+  stop
+endif
+if (版本冲突？) then (是)
+  :返回 409，提示刷新;
+  stop
+endif
+:同一事务追加处置历史与审计;
+if (提交成功？) then (是)
+  :返回新状态及时间线;
+else (否)
+  :回滚并反馈失败;
+endif
+stop
+@enduml

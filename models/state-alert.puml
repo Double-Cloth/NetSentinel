@@ -1,0 +1,11 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+[*] --> open : 首次正式发布
+open --> acknowledged : 认领并记录负责人
+acknowledged --> closed : 有权处置且填写理由
+acknowledged --> false_positive : 有权处置且填写理由
+note right of acknowledged
+认领及处置均校验 row_version
+备注和重跑不改变当前状态
+end note
+@enduml

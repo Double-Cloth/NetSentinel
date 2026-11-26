@@ -1,0 +1,35 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+start
+:到期调度或管理员重试;
+if (来源启用且租约可领取？) then (是)
+  :锁定配置版本及已提交断点;
+else (否)
+  stop
+endif
+:验证授权和主机身份，从断点有界读取;
+if (读取成功且文件代次可确认？) then (是)
+  :按换行截取完整行，保留尾部半行;
+else (否)
+  :记录阶段及失败码，保留已提交断点;
+  stop
+endif
+if (有完整行？) then (是)
+  :保存原始片段，解析并记录异常行;
+else (否)
+  :记录空尝试，保留断点;
+  stop
+endif
+if (有有效事件？) then (是)
+  :按时间和行号排序，分配事件序号;
+  :提交批次、分析意图、审计及断点;
+else (否)
+  :提交诊断、统计、审计及已消费断点;
+endif
+if (持久化成功？) then (是)
+  :展示本次结果及下次采集时间;
+else (否)
+  :回滚数据库，记录失败并保留断点;
+endif
+stop
+@enduml

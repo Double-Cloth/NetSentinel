@@ -1,0 +1,58 @@
+@startuml
+skinparam defaultFontName Microsoft YaHei
+package "身份与审计" {
+  class User
+  class Session
+  class AuditRecord
+  User "1" -- "0..*" Session
+  AuditRecord --> "0..1" User : 操作者
+}
+package "自动采集" {
+  class LogSource
+  class CollectionAttempt
+  class SourceFile
+  class Dataset
+  class NormalizedEvent
+  class ParseIssue
+  LogSource "1" -- "0..*" SourceFile : 文件代次
+  LogSource "1" -- "0..*" CollectionAttempt
+  CollectionAttempt --> "0..1" Dataset : 就绪批次
+  CollectionAttempt "1" -- "0..*" ParseIssue
+  note right of Dataset : 就绪批次发布后不可修改
+  Dataset "1" -- "1..*" NormalizedEvent
+  NormalizedEvent --> SourceFile : 原始引用
+  ParseIssue --> SourceFile
+}
+package "规则与执行" {
+  class Rule
+  class RuleVersion
+  class RuleEngine
+  class WindowState
+  class AnalysisTask
+  class Finding
+  class Evidence
+  Rule "1" -- "0..*" RuleVersion
+  AnalysisTask --> Dataset : 固定输入
+  AnalysisTask --> "1..*" RuleVersion : 固定规则
+  AnalysisTask ..> RuleEngine
+  RuleEngine ..> NormalizedEvent
+  RuleEngine ..> RuleVersion
+  RuleEngine ..> WindowState : 每次运行独立
+  RuleEngine ..> Finding : 输出
+  Finding "1" *-- "1..*" Evidence
+  Evidence --> NormalizedEvent
+}
+package "告警与通知" {
+  class Alert
+  class DispositionRecord
+  class NotificationConfig
+  class NotificationDelivery
+  Alert --> Finding : 冻结证据
+  Alert --> "0..1" User : 负责人
+  Alert "1" -- "0..*" DispositionRecord
+  DispositionRecord --> User
+  DispositionRecord ..> AuditRecord
+  NotificationDelivery --> Alert
+  NotificationDelivery --> NotificationConfig
+}
+@enduml

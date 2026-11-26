@@ -2,9 +2,67 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
+
+	"modernc.org/sqlite"
 )
+
+func TestWALWriterRollbackAndCommitVisibility(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "visibility.db")
+	writer, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer writer.Close()
+	if err := writer.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+	observer, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer observer.Close()
+	// 立即报告竞争，使实验不依赖锁等待时长。
+	if _, err := observer.DB.ExecContext(ctx, "PRAGMA busy_timeout=0"); err != nil {
+		t.Fatal(err)
+	}
+	const insert = `INSERT INTO audit_logs(id,action,object_type,object_id,request_id,change_json,result,created_at)
+		VALUES (?, 'test', 'fixture', 'batch-1', 'request-1', '{}', 'success', 0)`
+	assertCount := func(want int) {
+		t.Helper()
+		var count int
+		err := observer.DB.QueryRowContext(ctx, "SELECT count(*) FROM audit_logs").Scan(&count)
+		if err != nil || count != want {
+			t.Fatalf("审计记录可见数 = %d，期望 %d，错误 %v", count, want, err)
+		}
+	}
+
+	tx, err := writer.DB.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, insert, "staged"); err != nil {
+		t.Fatal(err)
+	}
+	assertCount(0)
+	const sqliteBusy = 5
+	var sqliteError *sqlite.Error
+	if _, err := observer.DB.ExecContext(ctx, insert, "competing"); !errors.As(err, &sqliteError) || sqliteError.Code() != sqliteBusy {
+		t.Fatalf("期望 SQLITE_BUSY，实际 %v", err)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	assertCount(0)
+	if _, err := observer.DB.ExecContext(ctx, insert, "competing"); err != nil {
+		t.Fatal(err)
+	}
+	assertCount(1)
+}
 
 func TestMigrateAndConstraints(t *testing.T) {
 	ctx := context.Background()

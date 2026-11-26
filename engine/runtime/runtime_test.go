@@ -101,6 +101,16 @@ func TestCountGolden(t *testing.T) {
 				if f.ActualCount != 5 || len(f.Evidence) != 5 || f.WindowStartUS != f.TriggerTimeUS-300000000 || f.Fingerprint == "" || f.ResultDigest == "" {
 					t.Fatalf("证据不符 %+v", f)
 				}
+				if tc.name == "相同时间按序处理" {
+					if f.TriggerIndex != 5 || f.TriggerEventID != "event-5" {
+						t.Fatalf("同一时间的触发顺序不符 %+v", f)
+					}
+					for i, evidence := range f.Evidence {
+						if evidence.EventIndex != int64(i+1) || evidence.RawRef.LineNo != int64(i+1) {
+							t.Fatalf("同一时间的证据顺序不符 %+v", f.Evidence)
+						}
+					}
+				}
 			}
 		})
 	}
