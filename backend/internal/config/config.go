@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Address      string
-	DataDir      string
-	DatabasePath string
-	PublicOrigin string
+	Address       string
+	DataDir       string
+	DatabasePath  string
+	PublicOrigin  string
+	SourceCatalog string
 }
 
 func Load() (Config, error) {
@@ -40,5 +41,5 @@ func Load() (Config, error) {
 			return Config{}, fmt.Errorf("NETSENTINEL_PUBLIC_ORIGIN 须为含协议和主机的 Origin")
 		}
 	}
-	return Config{Address: address, DataDir: absolute, DatabasePath: filepath.Join(absolute, "netsentinel.db"), PublicOrigin: origin}, nil
+	return Config{Address: address, DataDir: absolute, DatabasePath: filepath.Join(absolute, "netsentinel.db"), PublicOrigin: origin, SourceCatalog: os.Getenv("NETSENTINEL_SOURCE_CATALOG")}, nil
 }

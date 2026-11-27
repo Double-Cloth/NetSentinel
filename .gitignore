@@ -12,6 +12,9 @@
 /backend/data/
 /uploads/
 /backend/uploads/
+/deploy/credentials/*
+!/deploy/credentials/.gitkeep
+/deploy/sources.local.json
 
 # 构建与测试输出
 node_modules/

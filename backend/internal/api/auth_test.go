@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -64,7 +65,7 @@ func TestSessionLifecycle(t *testing.T) {
 	unknown := request("POST", "login", origin, `{"username":"unknown","password":"wrong"}`, "", nil, 401)
 	var a, b response
 	if json.Unmarshal(bad.Body.Bytes(), &a) != nil || json.Unmarshal(unknown.Body.Bytes(), &b) != nil ||
-		a.Error == nil || b.Error == nil || *a.Error != *b.Error {
+		a.Error == nil || b.Error == nil || !reflect.DeepEqual(*a.Error, *b.Error) {
 		t.Fatal("未知用户与错误密码应返回相同错误")
 	}
 	login := request("POST", "login", origin, credentials, "", nil, 200)

@@ -75,7 +75,7 @@ export function AuthGate() {
   }
 
   if (state.phase === 'authenticated') {
-    return <App username={state.session.user.username} logoutPending={pending} logoutError={error} onLogout={() => void logout(state.session)} />
+    return <App session={state.session} logoutPending={pending} logoutError={error} onLogout={() => void logout(state.session)} />
   }
 
   return (

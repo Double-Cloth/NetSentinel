@@ -1,18 +1,20 @@
 import { useEffect, useState, type MouseEvent } from 'react'
 import { HealthPanel } from '../features/overview/HealthPanel'
-import { modules, progress } from './modules'
+import { Alerts, Datasets, Overview, Rules, Sources, Tasks } from '../features/business/Pages'
+import type { Session } from '../shared/api/session'
+import { modules } from './modules'
 
 interface AppProps {
-  username: string
+  session: Session
   logoutPending: boolean
   logoutError: string
   onLogout: () => void
 }
 
-export function App({ username, logoutPending, logoutError, onLogout }: AppProps) {
+export function App({ session, logoutPending, logoutError, onLogout }: AppProps) {
   const [path, setPath] = useState(window.location.pathname)
   const [menuOpen, setMenuOpen] = useState(false)
-  const page = modules.find(item => item.path === path)
+  const page = modules.find(item => item.path === path || (item.path !== '/' && path.startsWith(`${item.path}/`)))
 
   useEffect(() => {
     const update = () => { setPath(window.location.pathname); setMenuOpen(false) }
@@ -39,7 +41,7 @@ export function App({ username, logoutPending, logoutError, onLogout }: AppProps
         <a className="brand" href="/" onClick={event => navigate(event, '/')}>NetSentinel</a>
         <button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="navigation" onClick={() => setMenuOpen(value => !value)}>菜单</button>
         <div className="account-controls">
-          <span className="stage-label">{username}</span>
+          <span className="stage-label">{session.user.username} · {session.user.role}</span>
           <button type="button" disabled={logoutPending} onClick={onLogout}>{logoutPending ? '正在退出…' : '退出登录'}</button>
         </div>
       </header>
@@ -53,22 +55,15 @@ export function App({ username, logoutPending, logoutError, onLogout }: AppProps
           {logoutError && <p className="error-message" role="alert">{logoutError}</p>}
           <h1 id="page-heading" tabIndex={-1}>{page?.label ?? '页面不存在'}</h1>
           {path === '/' ? <>
-            <p className="page-description">授权日志的离线分析与证据追溯</p>
-            <HealthPanel />
-            <section className="panel" aria-labelledby="progress-heading">
-              <h2 id="progress-heading">开发进度</h2>
-              <div className="table-scroll" role="region" aria-label="模块开发进度" tabIndex={0}>
-                <table><thead><tr><th scope="col">模块</th><th scope="col">当前能力</th><th scope="col">后续计划</th></tr></thead>
-                  <tbody>{progress.map(([name, current, next]) => <tr key={name}><th scope="row">{name}</th><td>{current}</td><td>{next}</td></tr>)}</tbody>
-                </table>
-              </div>
-            </section>
-            <p className="stage-note">基础框架阶段，业务流程按项目增量计划接入。</p>
-          </> : page ? <section className="module-state" aria-labelledby="module-heading">
-            <h2 id="module-heading">模块基础已建立</h2>
-            <p>{page.current}</p><p className="muted">{page.next}</p>
-            <a href="/" onClick={event => navigate(event, '/')}>返回工作台</a>
-          </section> : <p>请通过侧导航访问项目页面。</p>}
+            <p className="page-description">授权日志定时采集、批次分析与证据追溯</p>
+            <Overview /><HealthPanel />
+          </> : path === '/settings' ? <Sources session={session} />
+            : path === '/datasets' || path.startsWith('/datasets/') ? <Datasets id={path.split('/')[2]} />
+              : path === '/tasks' ? <Tasks session={session} />
+                : path === '/alerts' || path.startsWith('/alerts/') ? <Alerts id={path.split('/')[2]} />
+                  : path === '/rules' ? <Rules />
+                    : page ? <section className="module-state"><h2>开发中</h2><p>{page.next}</p></section>
+                      : <p>页面不存在，请通过侧导航访问。</p>}
         </div>
       </main>
     </div>

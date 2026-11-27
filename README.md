@@ -14,7 +14,7 @@ NetSentinel 面向实验室、小型服务器和教学环境。项目以授权 N
 | 过程模型 | 需求基线约束下的增量迭代，按 v0.1、v0.2、v0.3 形成三个可运行交付 |
 | 选型理由 | 检测正确性和日志格式存在早期风险，先用最小纵向业务验证，再增加规则能力与产品流程，每轮保留测试、评审与回顾证据 |
 | 成功标准 | 三类规则结果正确，重复分析幂等，三角色权限有效，完整业务可复现，课程资料与发布记录对应 |
-| 当前阶段 | v0.1.0 开发中，基础登录、健康检查和独立 Count 引擎可用 |
+| 当前阶段 | v0.1.0 开发中，自动采集、跨批次 Count 分析及站内告警代码已接入；受控 SFTP、Compose 业务验收和人工评审待完成 |
 
 ## 主流程修订计划
 
@@ -45,9 +45,9 @@ AGENTS.md               智能体行为与业务不变量
 DESIGN.md               中文界面、视觉 token 与交互规范
 ```
 
-基础代码已实现规则严格解码、带类型谓词、Count、确定性证据与指纹、输入顺序与资源校验、SQLite WAL/外键/事务迁移、HTTP 健康检查、请求标识，以及真实服务状态工作台。根目录规则约束后续实现，模块可通过现有 CI 独立检查。
+代码已实现规则严格解码、带类型谓词、Count、确定性证据与指纹、输入顺序与资源校验、SQLite WAL/外键/事务迁移、基础身份与健康检查。后端新增授权源目录、只读 SFTP 定位读取、SSH/Nginx 解析、不可变原文与批次、自动任务和站内告警。跨批次 Count 使用来源前缀重放和触发批次所有权，具体边界见 [ADR-010](Documentation/ADR/010_跨批次回放与采集实现.md)。
 
-当前 Web 支持基础登录、刷新恢复会话、退出登录和真实健康检查。采集、解析、自动任务与告警页面仍按 v0.1.0 工作包开发。Distinct、Sequence、规则治理、完整 RBAC、人工处置及通知在后续增量交付。
+当前 Web 支持基础登录、刷新恢复会话、退出登录、健康检查、来源状态与重试、批次诊断、自动任务及告警证据查询。Distinct、Sequence、规则草稿与发布治理、完整 RBAC、人工处置及飞书通知在后续增量交付。来源错误、积压和数据过期单独显示；无告警不能解释为无风险。
 
 ## 本地启动
 
@@ -86,8 +86,42 @@ npm run dev
 | `POST /api/v1/auth/login` | 校验同源请求与用户名密码，建立会话 |
 | `GET /api/v1/auth/me` | 使用会话 Cookie 查询当前用户、权限与 CSRF token |
 | `POST /api/v1/auth/logout` | 校验 Origin 和 CSRF 后撤销会话，返回 204 |
+| `GET/POST /api/v1/log-sources` | 查看来源，admin 从部署授权目录启用来源 |
+| `PATCH /api/v1/log-sources/{id}` | admin 按 `row_version` 修改周期、解析参数与启停 |
+| `POST /api/v1/log-sources/{id}/test` | admin 只读连接测试与前 100 行解析预览，不推进断点 |
+| `POST /api/v1/log-sources/{id}/retry` | admin 排队采集重试；尝试结果在 `/attempts` 查询 |
+| `GET /api/v1/datasets`、`GET /api/v1/datasets/{id}/lines` | 查看不可变批次、原始行与诊断 |
+| `GET /api/v1/tasks`、`GET /api/v1/alerts` | 查看自动任务及告警；`/alerts/{id}/evidence` 查询原始证据 |
+| `GET /api/v1/rules/R-001`、`POST /api/v1/rules/validate` | 查看固定规则、校验 Count 规则 JSON |
 
 响应使用 `data` / `error` 与 `request_id`，原始目录及内部错误只保留在服务端。
+
+### 配置授权日志源
+
+部署者先准备只读 SFTP 账号、固定主机公钥、私钥文件及稳定追加的日志导出。源端还需提供一个只读代次文件，内容为 1—64 位 ASCII 字母、数字、下划线或连字符，可有一个尾随换行。启用期间同一代次的已写前缀不可改；轮转或截断会明确失败，不能自动续采。真实日志须先按部署方要求脱敏并取得授权。
+
+Compose 部署时将私钥放在本地 `deploy/credentials/`，确保容器用户 10001 可读；复制 `deploy/sources.example.json` 为 `deploy/sources.local.json`，填写授权条目。目录文件只保存私钥的容器内路径，不保存私钥内容；两个本地路径均由 `.gitignore` 排除。条目示例中的主机公钥须替换为实际核验值：
+
+```json
+[
+  {
+    "id": "lab-ssh",
+    "name": "实验室 SSH 脱敏导出",
+    "address": "sftp.example.invalid:22",
+    "username": "netsentinel-readonly",
+    "key_file": "/run/netsentinel/credentials/reader.key",
+    "host_public_key": "ssh-ed25519 <经独立渠道核验的公钥>",
+    "log_path": "/export/auth.log",
+    "generation_path": "/export/auth.generation",
+    "format": "ssh-rfc3339",
+    "source_host": "server-node-01"
+  }
+]
+```
+
+在根目录 `.env` 中设置 `NETSENTINEL_SOURCE_CATALOG_FILE=./deploy/sources.local.json`，重新启动 Compose。管理员在“系统设置”选择授权条目、设置采集周期并启用。默认的 `sources.example.json` 是空目录，启动后不会访问任何远端。直接运行后端时，可用 `NETSENTINEL_SOURCE_CATALOG` 指向受控 JSON 文件，并将 `key_file` 写成该机器的绝对路径。
+
+v0.1 固定 R-001 对 SSH 失败事件自动分析，Nginx 批次可查看但不运行 SSH 规则。Count 跨批次按同一来源的固定历史前缀重放；新增事件时间倒退时拒绝发布，避免静默改变历史窗口。单次运行上限为 100 万事件，超限任务显式失败。首次部署建议用授权合成源验证四条失败位于前批次、第五条位于后批次的告警与五条证据，再测试断线、半行和重试。
 
 ## Compose 启动
 

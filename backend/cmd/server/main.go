@@ -16,6 +16,7 @@ import (
 
 	"github.com/Double-Cloth/NetSentinel/backend/internal/api"
 	"github.com/Double-Cloth/NetSentinel/backend/internal/auth"
+	"github.com/Double-Cloth/NetSentinel/backend/internal/collection"
 	"github.com/Double-Cloth/NetSentinel/backend/internal/config"
 	"github.com/Double-Cloth/NetSentinel/backend/internal/repository"
 )
@@ -82,9 +83,21 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	catalog, err := collection.LoadCatalog(cfg.SourceCatalog)
+	if err != nil {
+		return err
+	}
+	pipeline, err := collection.NewService(store.DB, catalog, nil, cfg.DataDir)
+	if err != nil {
+		return err
+	}
+	if err := pipeline.Recover(startup); err != nil {
+		return err
+	}
+	pipeline.Start(ctx)
 	handler := api.New(api.Dependencies{
 		DatabaseReady: store.Ready, DirectoryReady: func() error { return repository.WritableDirectory(cfg.DataDir) },
-		Logger: logger, Auth: identity, PublicOrigin: cfg.PublicOrigin,
+		Logger: logger, Auth: identity, Collection: pipeline, PublicOrigin: cfg.PublicOrigin,
 	})
 	server := &http.Server{Addr: cfg.Address, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	listener, err := net.Listen("tcp", cfg.Address)

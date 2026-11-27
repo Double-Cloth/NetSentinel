@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Double-Cloth/NetSentinel/backend/internal/auth"
+	"github.com/Double-Cloth/NetSentinel/backend/internal/collection"
 	"github.com/Double-Cloth/NetSentinel/engine/rule"
 )
 
@@ -19,6 +21,7 @@ type Dependencies struct {
 	DirectoryReady func() error
 	Logger         *slog.Logger
 	Auth           *auth.Service
+	Collection     *collection.Service
 	PublicOrigin   string
 }
 
@@ -29,7 +32,13 @@ type Health struct {
 }
 
 type APIError struct {
-	Code    string `json:"code"`
+	Code    string       `json:"code"`
+	Message string       `json:"message"`
+	Details []FieldError `json:"details,omitempty"`
+}
+
+type FieldError struct {
+	Path    string `json:"path"`
 	Message string `json:"message"`
 }
 
@@ -87,8 +96,14 @@ func New(deps Dependencies) http.Handler {
 			}
 			result.Data = health
 		default:
-			status = http.StatusNotFound
-			result.Error = &APIError{Code: "NOT_FOUND", Message: "请求的接口不存在"}
+			if strings.HasPrefix(r.URL.Path, "/api/v1/log-sources") || strings.HasPrefix(r.URL.Path, "/api/v1/datasets") ||
+				strings.HasPrefix(r.URL.Path, "/api/v1/tasks") || strings.HasPrefix(r.URL.Path, "/api/v1/alerts") ||
+				strings.HasPrefix(r.URL.Path, "/api/v1/rules") {
+				status = handleBusiness(w, r, deps, &result)
+			} else {
+				status = http.StatusNotFound
+				result.Error = &APIError{Code: "NOT_FOUND", Message: "请求的接口不存在"}
+			}
 		}
 		w.WriteHeader(status)
 		if r.Method != http.MethodHead && status != http.StatusNoContent {
